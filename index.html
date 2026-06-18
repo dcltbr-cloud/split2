@@ -41,8 +41,8 @@
       { name: "Eve", color: "#E91E8C", emoji: "🌸" },
     ];
     const CATEGORIES = [
-      { name: "Casa", icon: "🏠" },
-      { name: "Auto", icon: "🚗" },
+      { name: "Casa", icon: "🏠", subs: ["Supermercado","Luz","Gas","ABL","Telecentro","Agua","Otros"] },
+      { name: "Auto", icon: "🚗", subs: ["Nafta","Peajes","Seguro","Patente","Lavadero","Mantenimiento"] },
       { name: "Salidas", icon: "🎉" },
       { name: "Delivery", icon: "🛵" },
       { name: "Farmacia", icon: "💊" },
@@ -171,13 +171,20 @@
     }
 
     function AgregarView({ user, onAdd }) {
-      const [form, setForm] = useState({ amount:"", category:"Casa", desc:"", date: new Date().toISOString().slice(0,10) });
+      const [form, setForm] = useState({ amount:"", category:"Casa", sub:"Supermercado", desc:"", date: new Date().toISOString().slice(0,10) });
       const [loading, setLoading] = useState(false);
+
+      const selectedCat = CATEGORIES.find(c => c.name === form.category);
+
+      const handleCatChange = (e) => {
+        const cat = CATEGORIES.find(c => c.name === e.target.value);
+        setForm(f => ({ ...f, category: e.target.value, sub: cat?.subs?.[0] || "" }));
+      };
 
       const handleAdd = async () => {
         if (!form.amount || isNaN(form.amount) || Number(form.amount) <= 0) return;
         setLoading(true);
-        await onAdd({ user:user.name, amount:Number(form.amount), category:form.category, desc:form.desc, date:form.date });
+        await onAdd({ user:user.name, amount:Number(form.amount), category:form.category, sub: form.sub || "", desc:form.desc, date:form.date });
         setForm(f => ({ ...f, amount:"", desc:"" }));
         setLoading(false);
       };
@@ -190,10 +197,19 @@
             <input type="number" value={form.amount} onChange={e=>setForm(f=>({...f,amount:e.target.value}))}
               style={{ width:"100%", padding:14, fontSize:18, borderRadius:10, border:"2px solid #5C6BC0", boxSizing:"border-box", marginBottom:16, outline:"none" }} placeholder="0" />
             <label style={{ display:"block", marginBottom:6, fontSize:13, color:"#666" }}>Categoría</label>
-            <select value={form.category} onChange={e=>setForm(f=>({...f,category:e.target.value}))}
+            <select value={form.category} onChange={handleCatChange}
               style={{ width:"100%", padding:12, fontSize:15, borderRadius:10, border:"1.5px solid #ddd", boxSizing:"border-box", marginBottom:16, background:"#fff" }}>
               {CATEGORIES.map(c=><option key={c.name} value={c.name}>{c.icon} {c.name}</option>)}
             </select>
+            {selectedCat?.subs && (
+              <>
+                <label style={{ display:"block", marginBottom:6, fontSize:13, color:"#666" }}>Subcategoría</label>
+                <select value={form.sub} onChange={e=>setForm(f=>({...f,sub:e.target.value}))}
+                  style={{ width:"100%", padding:12, fontSize:15, borderRadius:10, border:"1.5px solid #ddd", boxSizing:"border-box", marginBottom:16, background:"#fff" }}>
+                  {selectedCat.subs.map(s=><option key={s} value={s}>{s}</option>)}
+                </select>
+              </>
+            )}
             <label style={{ display:"block", marginBottom:6, fontSize:13, color:"#666" }}>Descripción (opcional)</label>
             <input type="text" value={form.desc} onChange={e=>setForm(f=>({...f,desc:e.target.value}))}
               style={{ width:"100%", padding:12, fontSize:15, borderRadius:10, border:"1.5px solid #ddd", boxSizing:"border-box", marginBottom:16 }} placeholder="Ej: supermercado" />
